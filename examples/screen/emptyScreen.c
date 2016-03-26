@@ -14,4 +14,5 @@ void GUI_Setup(void *pset, int w, int h) {
 
 void GUI_Process() {
   //Empty Screen
+  UG_Update();
 }
