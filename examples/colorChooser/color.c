@@ -23,16 +23,17 @@ void GUI_Setup(void *pset, int w, int h){
 
   //Setup Window
   UG_WindowCreate(&wnd, objs, MAX_OBJS, &windowHandler);
-  UG_WindowShow(&wnd);
+  UG_WindowSetTitleHeight(&wnd, 0);
 
   //Create HSV Chooser Image
-  createHSVBMP(&bmp, 255, 255);
+  createHSVBMP(&bmp, 252, 255);
 
-  UG_ImageCreate(&wnd, &img, IMG_ID_0, 30, 30, 0, 0);
+  UG_ImageCreate(&wnd, &img, IMG_ID_0, 112, 0, 252, 255);
 
   UG_ImageSetBMP(&wnd, IMG_ID_0, &bmp);
 
-  UG_ImageShow(&wnd, IMG_ID_0);
+  //  UG_ImageShow(&wnd, IMG_ID_0);
+  UG_WindowShow(&wnd);
 }
 
 void GUI_Process() {
@@ -41,7 +42,7 @@ void GUI_Process() {
 }
 
 void windowHandler(UG_MESSAGE *msg) {
-
+  (void)msg;
 }
 
 #define HSV_SECTION 42
