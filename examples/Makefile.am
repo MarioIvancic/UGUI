@@ -1,1 +1,2 @@
-SUBDIRS = screen
+SUBDIRS = screen \
+          colorChooser
