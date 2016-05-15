@@ -1,0 +1,3 @@
+SUBDIRS = src \
+					sim \
+					examples
