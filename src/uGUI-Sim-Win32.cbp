@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="uGUI-Sim-Win32" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/uGUI-Sim-Win32" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/uGUI-Sim-Win32" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add directory="../src" />
+		</Compiler>
+		<Linker>
+			<Add library="gdi32" />
+			<Add library="user32" />
+			<Add library="kernel32" />
+			<Add library="comctl32" />
+		</Linker>
+		<Unit filename="buttonTest.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_10x16.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_12x16.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_12x20.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_16x26.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_22x36.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_24x40.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_32x53.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_4x6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_5x12.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_5x8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_6x10.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_6x8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_7x12.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_8x12.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_8x12_cyrillic.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_8x14.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="font/font_8x8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="simulation.h" />
+		<Unit filename="uGUI-Sim-Win32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ugui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ugui.h" />
+		<Unit filename="ugui_config.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
