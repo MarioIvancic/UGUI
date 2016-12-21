@@ -1,3 +1,4 @@
+#include "ugui.h"
 
 #ifdef USE_FONT_22X36
 __UG_FONT_DATA unsigned char font_22x36[256][108]={

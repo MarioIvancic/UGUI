@@ -1,3 +1,4 @@
+#include "ugui.h"
 
 #ifdef USE_FONT_12X20
 __UG_FONT_DATA unsigned char font_12x20[256][40]={

@@ -1,3 +1,4 @@
+#include "ugui.h"
 
 #ifdef USE_FONT_7X12
 __UG_FONT_DATA unsigned char font_7x12[256][12]={

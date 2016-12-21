@@ -18,7 +18,7 @@
 /* -------------------------------------------------------------------------------- */
 // Andrey Filimonov (-->https://github.com/Sermus)
 // for giving valuable suggestions, reporting bugs and adding several new features.
-// Andrey also put a lot of work in the implementaion of anti-aliased font support. 
+// Andrey also put a lot of work in the implementaion of anti-aliased font support.
 //
 // Mikhail Podkur (-->https://github.com/MikhailPodkur)
 // for adding cyrillic 8x12 font, checkbox feature and RGB565 support.
@@ -451,7 +451,7 @@ void UG_DrawLine( UG_S16 x1, UG_S16 y1, UG_S16 x2, UG_S16 y2, UG_COLOR c )
          drawy += sgndy;
          gui->pset(drawx, drawy,c);
       }
-   }  
+   }
 }
 
 void UG_PutString( UG_S16 x, UG_S16 y, const char* str )
@@ -505,7 +505,7 @@ void UG_ConsolePutString( const char* str )
          str++;
          continue;
       }
-      
+
       cw = gui->font.widths ? gui->font.widths[chr - gui->font.start_char] : gui->font.char_width;
       gui->console.x_pos += cw+gui->char_h_space;
 
@@ -794,7 +794,7 @@ void _UG_PutChar( char chr, UG_S16 x, UG_S16 y, UG_COLOR fc, UG_COLOR bc, const 
    }
 
    if (bt < font->start_char || bt > font->end_char) return;
-   
+
    yo = y;
    bn = font->char_width;
    if ( !bn ) return;
@@ -1312,12 +1312,12 @@ void UG_Update( void )
 void UG_WaitForUpdate( void )
 {
    gui->state |= UG_SATUS_WAIT_FOR_UPDATE;
-   #ifdef USE_MULTITASKING    
+   #ifdef USE_MULTITASKING
    while ( (volatile UG_U8)gui->state & UG_SATUS_WAIT_FOR_UPDATE ){};
-   #endif    
-   #ifndef USE_MULTITASKING    
+   #endif
+   #ifndef USE_MULTITASKING
    while ( (UG_U8)gui->state & UG_SATUS_WAIT_FOR_UPDATE ){};
-   #endif    
+   #endif
 }
 
 void UG_DrawBMP( UG_S16 xp, UG_S16 yp, UG_BMP* bmp )
@@ -2696,7 +2696,7 @@ UG_RESULT UG_CheckboxCreate( UG_WINDOW* wnd, UG_CHECKBOX* chb, UG_U8 id, UG_S16 
    if (gui != NULL) chb->font = &gui->font;
    else chb->font = NULL;
    chb->str = "-";
-   chb->checked = 0; 
+   chb->checked = 0;
 
    /* Initialize standard object parameters */
    obj->update = _UG_CheckboxUpdate;
@@ -3158,8 +3158,8 @@ void _UG_CheckboxUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
          chb->state &= ~CHB_STATE_PRESSED;
          obj->state |= OBJ_STATE_UPDATE;
          obj->event = OBJ_EVENT_RELEASED;
-          
-         chb->checked = !chb->checked; 
+
+         chb->checked = !chb->checked;
       }
       obj->touch_state &= ~OBJ_TOUCH_STATE_CHANGED;
    }
@@ -3176,13 +3176,13 @@ void _UG_CheckboxUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
       obj->a_abs.ye = obj->a_rel.ye + a.ys;
       if ( obj->a_abs.ye > wnd->ye ) return;
       if ( obj->a_abs.xe > wnd->xe ) return;
-       
+
       if ( obj->state & OBJ_STATE_VISIBLE )
       {
          /* 3D or 2D style? */
          d  = ( chb->style & CHB_STYLE_3D )? 3:1;
          d2 = (chb->font->char_width < chb->font->char_height) ? chb->font->char_height : chb->font->char_width;
-          
+
          /* Full redraw necessary? */
          if ( (obj->state & OBJ_STATE_REDRAW) || (chb->state & CHB_STATE_ALWAYS_REDRAW) )
          {
@@ -3231,14 +3231,14 @@ void _UG_CheckboxUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
             _UG_SendObjectPostrenderEvent(wnd, obj);
 #endif
          }
-         
+
          /* Draw Checkbox X */
          if (chb->checked)
-         {    
+         {
             UG_DrawLine(obj->a_abs.xs+d+1,  obj->a_abs.ys+d,   obj->a_abs.xs+d2+d-1, obj->a_abs.ys+d2+d-2, chb->fc);
             UG_DrawLine(obj->a_abs.xs+d,    obj->a_abs.ys+d,   obj->a_abs.xs+d2+d-1, obj->a_abs.ys+d2+d-1, chb->fc);
             UG_DrawLine(obj->a_abs.xs+d,    obj->a_abs.ys+d+1, obj->a_abs.xs+d2+d-2, obj->a_abs.ys+d2+d-1, chb->fc);
- 
+
             UG_DrawLine(obj->a_abs.xs+d2+d-1,  obj->a_abs.ys+d+1, obj->a_abs.xs+d+1, obj->a_abs.ys+d2+d-1, chb->fc);
             UG_DrawLine(obj->a_abs.xs+d2+d-1,  obj->a_abs.ys+d,   obj->a_abs.xs+d,   obj->a_abs.ys+d2+d-1, chb->fc);
             UG_DrawLine(obj->a_abs.xs+d2+d-2,  obj->a_abs.ys+d,   obj->a_abs.xs+d,   obj->a_abs.ys+d2+d-2, chb->fc);
@@ -3248,11 +3248,11 @@ void _UG_CheckboxUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
             UG_DrawLine(obj->a_abs.xs+d+1,  obj->a_abs.ys+d,   obj->a_abs.xs+d2+d-1, obj->a_abs.ys+d2+d-2, chb->bc);
             UG_DrawLine(obj->a_abs.xs+d,    obj->a_abs.ys+d,   obj->a_abs.xs+d2+d-1, obj->a_abs.ys+d2+d-1, chb->bc);
             UG_DrawLine(obj->a_abs.xs+d,    obj->a_abs.ys+d+1, obj->a_abs.xs+d2+d-2, obj->a_abs.ys+d2+d-1, chb->bc);
- 
+
             UG_DrawLine(obj->a_abs.xs+d2+d-1,  obj->a_abs.ys+d+1, obj->a_abs.xs+d+1, obj->a_abs.ys+d2+d-1, chb->bc);
             UG_DrawLine(obj->a_abs.xs+d2+d-1,  obj->a_abs.ys+d,   obj->a_abs.xs+d,   obj->a_abs.ys+d2+d-1, chb->bc);
             UG_DrawLine(obj->a_abs.xs+d2+d-2,  obj->a_abs.ys+d,   obj->a_abs.xs+d,   obj->a_abs.ys+d2+d-2, chb->bc);
-         }    
+         }
          /* Draw Checkbox frame */
          if ( !(chb->style & CHB_STYLE_NO_BORDERS) )
          {
