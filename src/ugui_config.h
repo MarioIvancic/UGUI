@@ -14,7 +14,7 @@
 //#define USE_COLOR_RGB565   // RGB = 0bRRRRRGGGGGGBBBBB
 
 /* Enable needed fonts here */
-//#define  USE_FONT_4X6
+#define  USE_FONT_4X6
 //#define  USE_FONT_5X8
 //#define  USE_FONT_5X12
 //#define  USE_FONT_6X8
@@ -64,6 +64,8 @@ typedef signed long int       UG_S32;
 #define USE_PRERENDER_EVENT
 #define USE_POSTRENDER_EVENT
 #define USE_CONSOLE
+// Eneble touc move event
+#define USE_TOUCH_MOVE
 
 
 #endif

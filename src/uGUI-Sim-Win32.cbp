@@ -38,7 +38,7 @@
 			<Add library="kernel32" />
 			<Add library="comctl32" />
 		</Linker>
-		<Unit filename="color.c">
+		<Unit filename="buttonTest.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="font/font_10x16.c">

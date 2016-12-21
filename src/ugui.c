@@ -1044,6 +1044,9 @@ UG_RESULT _UG_DeleteObject( UG_WINDOW* wnd, UG_U8 type, UG_U8 id )
    return UG_RESULT_FAIL;
 }
 
+
+#define is_obj_hit(obj, x, y) ( obj->a_abs.xs <= x && x <= obj->a_abs.xe && obj->a_abs.ys <= y && y <= obj->a_abs.ye )
+
 void _UG_ProcessTouchData( UG_WINDOW* wnd )
 {
    UG_S16 xp,yp;
@@ -1052,6 +1055,7 @@ void _UG_ProcessTouchData( UG_WINDOW* wnd )
    UG_U8 objstate;
    UG_U8 objtouch;
    UG_U8 tchstate;
+   UG_U8 touchhit = 0;
 
    xp = gui->touch.xp;
    yp = gui->touch.yp;
@@ -1063,57 +1067,84 @@ void _UG_ProcessTouchData( UG_WINDOW* wnd )
       obj = (UG_OBJECT*)&wnd->objlst[i];
       objstate = obj->state;
       objtouch = obj->touch_state;
-      if ( !(objstate & OBJ_STATE_FREE) && (objstate & OBJ_STATE_VALID) && (objstate & OBJ_STATE_VISIBLE) && !(objstate & OBJ_STATE_REDRAW))
-      {
-         /* Process touch data */
-         if ( (tchstate) && xp != -1 )
-         {
-            if ( !(objtouch & OBJ_TOUCH_STATE_IS_PRESSED) )
+      if ( !(objstate & (OBJ_STATE_FREE | OBJ_STATE_REDRAW)) && (objstate & OBJ_STATE_VALID) && (objstate & OBJ_STATE_VISIBLE))
+        {
+            /* Process touch data */
+#ifdef USE_TOUCH_MOVE
+            objtouch &= ~(OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_MOVED | OBJ_TOUCH_STATE_CLICK_ON_OBJECT);
+#else
+            objtouch &= ~(OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_CLICK_ON_OBJECT);
+#endif
+
+            if ( tchstate == TOUCH_STATE_PRESSED )
             {
-               objtouch |= OBJ_TOUCH_STATE_PRESSED_OUTSIDE_OBJECT | OBJ_TOUCH_STATE_CHANGED;
-               objtouch &= ~(OBJ_TOUCH_STATE_RELEASED_ON_OBJECT | OBJ_TOUCH_STATE_RELEASED_OUTSIDE_OBJECT | OBJ_TOUCH_STATE_CLICK_ON_OBJECT);
+                if ( is_obj_hit(obj, xp, yp) )
+                {
+                    touchhit = 1;
+#ifdef USE_TOUCH_MOVE
+                    if ( objtouch & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+                    {
+                        // TODO: add hysteresis to move
+                        objtouch |= OBJ_TOUCH_STATE_MOVED;
+                    }
+#endif // USE_TOUCH_MOVE
+                    objtouch |= OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_PRESSED_ON_OBJECT;
+                }
+                else    // touch, but no hit (on this object)
+                {
+                    if ( objtouch & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+                    {
+                        // TODO: add hysteresis to move
+#ifdef USE_TOUCH_MOVE
+                        objtouch |= OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_MOVED;
+#else
+                        objtouch |= OBJ_TOUCH_STATE_CHANGED;
+#endif
+                        objtouch &= ~OBJ_TOUCH_STATE_PRESSED_ON_OBJECT;
+                    }
+                }
             }
-            objtouch &= ~OBJ_TOUCH_STATE_IS_PRESSED_ON_OBJECT;
-            if ( xp >= obj->a_abs.xs )
+            else if ( tchstate == TOUCH_STATE_RELEASED )
             {
-               if ( xp <= obj->a_abs.xe )
-               {
-                  if ( yp >= obj->a_abs.ys )
-                  {
-                     if ( yp <= obj->a_abs.ye )
-                     {
-                        objtouch |= OBJ_TOUCH_STATE_IS_PRESSED_ON_OBJECT;
-                        if ( !(objtouch & OBJ_TOUCH_STATE_IS_PRESSED) )
-                        {
-                           objtouch &= ~OBJ_TOUCH_STATE_PRESSED_OUTSIDE_OBJECT;
-                           objtouch |= OBJ_TOUCH_STATE_PRESSED_ON_OBJECT;
-                        }
-                     }
-                  }
-               }
+                if ( objtouch & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+                {
+                    objtouch |= OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_CLICK_ON_OBJECT;
+                    objtouch &= ~OBJ_TOUCH_STATE_PRESSED_ON_OBJECT;
+                }
             }
-            objtouch |= OBJ_TOUCH_STATE_IS_PRESSED;
-         }
-         else if ( objtouch & OBJ_TOUCH_STATE_IS_PRESSED )
-         {
-            if ( objtouch & OBJ_TOUCH_STATE_IS_PRESSED_ON_OBJECT )
-            {
-               if ( objtouch & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT ) objtouch |= OBJ_TOUCH_STATE_CLICK_ON_OBJECT;
-               objtouch |= OBJ_TOUCH_STATE_RELEASED_ON_OBJECT;
-            }
-            else
-            {
-               objtouch |= OBJ_TOUCH_STATE_RELEASED_OUTSIDE_OBJECT;
-            }
-            if ( objtouch & OBJ_TOUCH_STATE_IS_PRESSED )
-            {
-               objtouch |= OBJ_TOUCH_STATE_CHANGED;
-            }
-            objtouch &= ~(OBJ_TOUCH_STATE_PRESSED_OUTSIDE_OBJECT | OBJ_TOUCH_STATE_PRESSED_ON_OBJECT | OBJ_TOUCH_STATE_IS_PRESSED);
-         }
-      }
+        }
       obj->touch_state = objtouch;
-   }
+    }
+
+    if( !touchhit && ( tchstate != TOUCH_STATE_NONE ))
+    {
+        // no hit on object, make window event
+        objtouch = wnd->touch_state;
+        objtouch &= ~(OBJ_TOUCH_STATE_CLICK_ON_OBJECT);
+        if ( tchstate == TOUCH_STATE_PRESSED )
+        {
+#ifdef USE_TOUCH_MOVE
+            if ( objtouch & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+            {
+                // TODO: add hysteresis to move
+                objtouch |= OBJ_TOUCH_STATE_MOVED;
+            }
+#endif // USE_TOUCH_MOVE
+            objtouch |= OBJ_TOUCH_STATE_PRESSED_ON_OBJECT;
+            wnd->event = OBJ_EVENT_TOUCH;
+        }
+        else if ( tchstate == TOUCH_STATE_RELEASED )
+        {
+            if ( objtouch & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+            {
+                objtouch |= OBJ_TOUCH_STATE_CLICK_ON_OBJECT;
+                objtouch &= ~OBJ_TOUCH_STATE_PRESSED_ON_OBJECT;
+                wnd->event = OBJ_EVENT_TOUCH;
+            }
+        }
+        wnd->touch_state = objtouch;
+    }
+    gui->touch.state = TOUCH_STATE_NONE;
 }
 
 void _UG_UpdateObjects( UG_WINDOW* wnd )
@@ -1138,7 +1169,8 @@ void _UG_UpdateObjects( UG_WINDOW* wnd )
          }
          if ( (objstate & OBJ_STATE_VISIBLE) && (objstate & OBJ_STATE_TOUCH_ENABLE) )
          {
-            if ( (objtouch & (OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_IS_PRESSED)) )
+            //if ( (objtouch & (OBJ_TOUCH_STATE_CHANGED | OBJ_TOUCH_STATE_IS_PRESSED)) )
+            if ( (objtouch & (OBJ_TOUCH_STATE_CHANGED)) )
             {
                obj->update(wnd,obj);
             }
@@ -1156,7 +1188,18 @@ void _UG_HandleEvents( UG_WINDOW* wnd )
    msg.src = NULL;
 
    /* Handle window-related events */
-   //ToDo
+   if(wnd->event != OBJ_EVENT_NONE)
+    {
+        msg.type = MSG_TYPE_WINDOW;
+        msg.src = &wnd;
+        msg.id = 0;
+        msg.sub_id = 0;
+        msg.event = wnd->event;
+
+        wnd->cb( &msg );
+
+        wnd->event = OBJ_EVENT_NONE;
+    }
 
 
    /* Handle object-related events */
@@ -1281,7 +1324,10 @@ void UG_Update( void )
          if ((gui->last_window != NULL) && (gui->last_window->style & WND_STYLE_SHOW_TITLE) && (gui->last_window->state & WND_STATE_VISIBLE) )
          {
             /* Do both windows differ in size */
-            if ( (gui->last_window->xs != gui->active_window->xs) || (gui->last_window->xe != gui->active_window->xe) || (gui->last_window->ys != gui->active_window->ys) || (gui->last_window->ye != gui->active_window->ye) )
+            if ( (gui->last_window->xs != gui->active_window->xs)
+                    || (gui->last_window->xe != gui->active_window->xe)
+                    || (gui->last_window->ys != gui->active_window->ys)
+                    || (gui->last_window->ye != gui->active_window->ye) )
             {
                /* Redraw title of the last window */
                _UG_WindowDrawTitle( gui->last_window );
@@ -1377,10 +1423,116 @@ void UG_DrawBMP( UG_S16 xp, UG_S16 yp, UG_BMP* bmp )
 
 void UG_TouchUpdate( UG_S16 xp, UG_S16 yp, UG_U8 state )
 {
+    /*
    gui->touch.xp = xp;
    gui->touch.yp = yp;
    gui->touch.state = state;
+   */
+    gui->touch.state = state;
+    if(state == TOUCH_STATE_PRESSED)
+    {
+        /*
+        if((gui->touch.xp == xp) && (gui->touch.yp == yp)) gui->touch.state = TOUCH_STATE_NONE;
+        else
+        */
+        {
+            gui->touch.xp = xp;
+            gui->touch.yp = yp;
+        }
+    }
 }
+
+
+UG_COLOR UG_RGB2Color(UG_RGB* rgb)
+{
+    UG_COLOR c;
+#ifdef USE_COLOR_RGB888
+    // ARGB8888
+    c = rgb->A;
+    c = (c << 8) | rgb->R;
+    c = (c << 8) | rgb->G;
+    c = (c << 8) | rgb->B;
+#endif // USE_COLOR_RGB888
+
+#ifdef USE_COLOR_RGB565
+    // ARGB0565
+    c = rgb->R;
+    c = (c << 5) | rgb->G;
+    c = (c << 6) | rgb->B;
+#endif // USE_COLOR_RGB565
+    return c;
+}
+
+void UG_Color2RGB(UG_COLOR c, UG_RGB* rgb)
+{
+#ifdef USE_COLOR_RGB888
+    // ARGB8888
+    rgb->B = c;
+    rgb->G = c >> 8;
+    rgb->R = c >> 16;
+    rgb->A = c >> 24;
+#endif // USE_COLOR_RGB888
+
+#ifdef USE_COLOR_RGB565
+    // ARGB0565
+    rgb->B = c & 0x1f;
+    rgb->G = (c >> 5) & 0x3f;
+    rgb->R = (c >> 9) & 0x1f;
+    rgb->A = 0;
+#endif // USE_COLOR_RGB565
+}
+
+
+// decode object/window touch bits to object touch events
+UG_U8 UG_DecodeTouchBits(UG_U8 touch_state)
+{
+    UG_U8 events = 0;
+    if(touch_state & OBJ_TOUCH_STATE_CLICK_ON_OBJECT) return OBJ_TOUCH_EVENT_CLICKED | OBJ_TOUCH_EVENT_RELEASED;
+#ifdef USE_TOUCH_MOVE
+    if(touch_state & OBJ_TOUCH_STATE_MOVED) events = OBJ_TOUCH_EVENT_MOVED;
+#endif // USE_TOUCH_MOVE
+    if(touch_state & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT) events |= OBJ_TOUCH_EVENT_PRESSED;
+    else events |= OBJ_TOUCH_EVENT_RELEASED;
+    return events;
+}
+
+
+// find object by object id
+UG_OBJECT* UG_FindObject( UG_WINDOW* wnd, UG_U8 id )
+{
+    UG_U8 i;
+    UG_OBJECT* obj;
+
+    if(!wnd) return NULL;
+
+    for(i=0; i<wnd->objcnt; i++)
+    {
+        obj = (UG_OBJECT*)(&wnd->objlst[i]);
+        if ( (obj->id == id) && !(obj->state & OBJ_STATE_FREE) && (obj->state & OBJ_STATE_VALID) )
+        {
+            /* Requested object found! */
+            return obj;
+        }
+    }
+    return NULL;
+}
+
+
+UG_RESULT UG_ObjectMoveRel( UG_WINDOW* wnd, UG_OBJECT* obj, UG_S16 xr, UG_S16 yr )
+{
+    if ( obj == NULL ) return UG_RESULT_FAIL;
+
+    UG_FillFrame(obj->a_abs.xs-3, obj->a_abs.ys-3, obj->a_abs.xe+3, obj->a_abs.ye+3, wnd->bc);
+
+    obj->a_rel.xs += xr;
+    obj->a_rel.ys += yr;
+    obj->a_rel.xe += xr;
+    obj->a_rel.ye += yr;
+    obj->state |= OBJ_STATE_REDRAW | OBJ_STATE_UPDATE;
+
+    return UG_RESULT_OK;
+}
+
 
 /* -------------------------------------------------------------------------------- */
 /* -- WINDOW FUNCTIONS                                                           -- */
@@ -2571,30 +2723,24 @@ void _UG_ButtonUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
    /* -------------------------------------------------- */
    /* Object touch section                               */
    /* -------------------------------------------------- */
-   if ( (obj->touch_state & OBJ_TOUCH_STATE_CHANGED) )
-   {
-      /* Handle 'click' event */
-      if ( obj->touch_state & OBJ_TOUCH_STATE_CLICK_ON_OBJECT )
-      {
-         obj->event = BTN_EVENT_CLICKED;
-         obj->state |= OBJ_STATE_UPDATE;
-      }
-      /* Is the button pressed down? */
-      if ( obj->touch_state & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
-      {
-         btn->state |= BTN_STATE_PRESSED;
-         obj->state |= OBJ_STATE_UPDATE;
-         obj->event = OBJ_EVENT_PRESSED;
-      }
-      /* Can we release the button? */
-      else if ( btn->state & BTN_STATE_PRESSED )
-      {
-         btn->state &= ~BTN_STATE_PRESSED;
-         obj->state |= OBJ_STATE_UPDATE;
-         obj->event = OBJ_EVENT_RELEASED;
-      }
-      obj->touch_state &= ~OBJ_TOUCH_STATE_CHANGED;
-   }
+    if ( (obj->touch_state & OBJ_TOUCH_STATE_CHANGED) )
+    {
+        obj->event = OBJ_EVENT_TOUCH;
+
+        /* Is the button pressed down? */
+        if ( obj->touch_state & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+        {
+            obj->state |= OBJ_STATE_UPDATE;
+            btn->state |= BTN_STATE_PRESSED;
+        }
+        /* Can we release the button? */
+        else if ( btn->state & BTN_STATE_PRESSED )
+        {
+            btn->state &= ~BTN_STATE_PRESSED;
+            obj->state |= OBJ_STATE_UPDATE;
+        }
+        obj->touch_state &= ~OBJ_TOUCH_STATE_CHANGED;
+    }
 
    /* -------------------------------------------------- */
    /* Object update section                              */
@@ -3142,32 +3288,24 @@ void _UG_CheckboxUpdate(UG_WINDOW* wnd, UG_OBJECT* obj)
    /* -------------------------------------------------- */
    /* Object touch section                               */
    /* -------------------------------------------------- */
-   if ( (obj->touch_state & OBJ_TOUCH_STATE_CHANGED) )
-   {
-      /* Handle 'click' event */
-      if ( obj->touch_state & OBJ_TOUCH_STATE_CLICK_ON_OBJECT )
-      {
-         obj->event = CHB_EVENT_CLICKED;
-         obj->state |= OBJ_STATE_UPDATE;
-      }
-      /* Is the Checkbox pressed down? */
-      if ( obj->touch_state & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
-      {
-         chb->state |= CHB_STATE_PRESSED;
-         obj->state |= OBJ_STATE_UPDATE;
-         obj->event = OBJ_EVENT_PRESSED;
-      }
-      /* Can we release the Checkbox? */
-      else if ( chb->state & CHB_STATE_PRESSED )
-      {
-         chb->state &= ~CHB_STATE_PRESSED;
-         obj->state |= OBJ_STATE_UPDATE;
-         obj->event = OBJ_EVENT_RELEASED;
+    if ( (obj->touch_state & OBJ_TOUCH_STATE_CHANGED) )
+    {
+        obj->event = OBJ_EVENT_TOUCH;
 
-         chb->checked = !chb->checked;
-      }
-      obj->touch_state &= ~OBJ_TOUCH_STATE_CHANGED;
-   }
+        /* Is the Checkbox pressed down? */
+        if ( obj->touch_state & OBJ_TOUCH_STATE_PRESSED_ON_OBJECT )
+        {
+            obj->state |= OBJ_STATE_UPDATE;
+            chb->state |= CHB_STATE_PRESSED;
+        }
+        /* Can we release the Checkbox? */
+        else if ( chb->state & CHB_STATE_PRESSED )
+        {
+            chb->state &= ~CHB_STATE_PRESSED;
+            obj->state |= OBJ_STATE_UPDATE;
+        }
+        obj->touch_state &= ~OBJ_TOUCH_STATE_CHANGED;
+    }
 
    /* -------------------------------------------------- */
    /* Object update section                              */

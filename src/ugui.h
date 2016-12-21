@@ -17,15 +17,8 @@
 #ifndef __UGUI_H
 #define __UGUI_H
 
-#include <stdint.h>
 #include "ugui_config.h"
 
-typedef uint8_t      UG_U8;
-typedef int8_t       UG_S8;
-typedef uint16_t     UG_U16;
-typedef int16_t      UG_S16;
-typedef uint32_t     UG_U32;
-typedef int32_t      UG_S32;
 
 /* -------------------------------------------------------------------------------- */
 /* -- µGUI FONTS                                                                 -- */
@@ -112,6 +105,13 @@ typedef UG_U32                                        UG_COLOR;
 #ifdef USE_COLOR_RGB565
 typedef UG_U16                                        UG_COLOR;
 #endif
+
+// color components
+typedef struct
+{
+    UG_U8 B, G, R, A;
+} UG_RGB;
+
 /* -------------------------------------------------------------------------------- */
 /* -- DEFINES                                                                    -- */
 /* -------------------------------------------------------------------------------- */
@@ -241,8 +241,14 @@ typedef struct
 } UG_TOUCH;
 
 
+/*
 #define TOUCH_STATE_PRESSED                           1
 #define TOUCH_STATE_RELEASED                          0
+*/
+#define TOUCH_STATE_PRESSED                           2
+#define TOUCH_STATE_RELEASED                          1
+#define TOUCH_STATE_NONE                              0
+
 
 /* -------------------------------------------------------------------------------- */
 /* -- OBJECTS                                                                    -- */
@@ -270,15 +276,26 @@ struct S_OBJECT
 
 /* Standard object events */
 #define OBJ_EVENT_NONE                                0
-#define OBJ_EVENT_CLICKED                             1
+//#define OBJ_EVENT_CLICKED                             1
+#define OBJ_EVENT_TOUCH                               1
 #ifdef USE_PRERENDER_EVENT
 #define OBJ_EVENT_PRERENDER                           2
 #endif
 #ifdef USE_POSTRENDER_EVENT
 #define OBJ_EVENT_POSTRENDER                          3
 #endif
-#define OBJ_EVENT_PRESSED                             4
-#define OBJ_EVENT_RELEASED                            5
+//#define OBJ_EVENT_PRESSED                             4
+//#define OBJ_EVENT_RELEASED                            5
+
+#define OBJ_TOUCH_EVENT_CLICKED                       1
+#define OBJ_TOUCH_EVENT_PRESSED                       2
+#define OBJ_TOUCH_EVENT_RELEASED                      4
+#ifdef USE_TOUCH_MOVE
+#define OBJ_TOUCH_EVENT_MOVED                         8
+#define OBJ_TOUCH_EVENTS (OBJ_TOUCH_EVENT_CLICKED | OBJ_TOUCH_EVENT_PRESSED | OBJ_TOUCH_EVENT_RELEASED | OBJ_TOUCH_EVENT_MOVED)
+#else
+#define OBJ_TOUCH_EVENTS (OBJ_TOUCH_EVENT_CLICKED | OBJ_TOUCH_EVENT_PRESSED | OBJ_TOUCH_EVENT_RELEASED)
+#endif // USE_TOUCH_MOVE
 
 
 /* Object states */
@@ -295,12 +312,16 @@ struct S_OBJECT
 /* Object touch states */
 #define OBJ_TOUCH_STATE_CHANGED                       (1<<0)
 #define OBJ_TOUCH_STATE_PRESSED_ON_OBJECT             (1<<1)
+/*
 #define OBJ_TOUCH_STATE_PRESSED_OUTSIDE_OBJECT        (1<<2)
 #define OBJ_TOUCH_STATE_RELEASED_ON_OBJECT            (1<<3)
 #define OBJ_TOUCH_STATE_RELEASED_OUTSIDE_OBJECT       (1<<4)
 #define OBJ_TOUCH_STATE_IS_PRESSED_ON_OBJECT          (1<<5)
 #define OBJ_TOUCH_STATE_IS_PRESSED                    (1<<6)
 #define OBJ_TOUCH_STATE_CLICK_ON_OBJECT               (1<<7)
+*/
+#define OBJ_TOUCH_STATE_MOVED                         (1<<2)
+#define OBJ_TOUCH_STATE_CLICK_ON_OBJECT               (1<<3)
 #define OBJ_TOUCH_STATE_INIT                          0
 
 /* -------------------------------------------------------------------------------- */
@@ -334,6 +355,8 @@ struct S_WINDOW
    UG_S16 xe;
    UG_S16 ye;
    UG_U8 style;
+   UG_U8 event;                              /* window-specific events                     */
+   UG_U8 touch_state;                        /* window touch state                         */
    UG_TITLE title;
    void (*cb)( UG_MESSAGE* );
 };
@@ -408,7 +431,7 @@ typedef struct
 #define BTN_STYLE_NO_FILL                             (1<<4)
 
 /* Button events */
-#define BTN_EVENT_CLICKED                             OBJ_EVENT_CLICKED
+//#define BTN_EVENT_CLICKED                             OBJ_EVENT_CLICKED
 
 /* -------------------------------------------------------------------------------- */
 /* -- CHECKBOX OBJECT                                                            -- */
@@ -466,7 +489,7 @@ typedef struct
 #define CHB_STYLE_NO_FILL                             (1<<4)
 
 /* Checkbox events */
-#define CHB_EVENT_CLICKED                             OBJ_EVENT_CLICKED
+//#define CHB_EVENT_CLICKED                             OBJ_EVENT_CLICKED
 
 
 /* -------------------------------------------------------------------------------- */
@@ -923,6 +946,13 @@ void UG_WaitForUpdate( void );
 void UG_Update( void );
 void UG_DrawBMP( UG_S16 xp, UG_S16 yp, UG_BMP* bmp );
 void UG_TouchUpdate( UG_S16 xp, UG_S16 yp, UG_U8 state );
+// decode object/window touch bits to object touch events
+UG_U8 UG_DecodeTouchBits(UG_U8 touch_state);
+// find object by object id
+UG_OBJECT* UG_FindObject( UG_WINDOW* wnd, UG_U8 id );
+UG_RESULT UG_ObjectMoveRel( UG_WINDOW* wnd, UG_OBJECT* obj, UG_S16 xr, UG_S16 yr );
+UG_COLOR UG_RGB2color(UG_RGB* rgb);
+void UG_Color2RGB(UG_COLOR c, UG_RGB* rgb);
 
 /* Driver functions */
 void UG_DriverRegister( UG_U8 type, void* driver );
